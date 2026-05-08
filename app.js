@@ -187,7 +187,7 @@ const defaultSystems = {
         label: "360 Camera",
         symbol: "360",
         prefix: "CAM360",
-        iconImage: "icons/360cam.png",
+        iconImage: "icons/360Cam.png",
         iconSize: 17
       },
 
