@@ -1604,10 +1604,17 @@ function onCanvasMouseMove(event) {
 
   if (!page) return;
 
+  const marker = page.markers[draggingMarkerIndex];
+
+  if (!marker) {
+    draggingMarkerIndex = null;
+    return;
+  }
+
   const { x, y } = getCanvasPoint(event);
 
-  page.markers[draggingMarkerIndex].x = x;
-  page.markers[draggingMarkerIndex].y = y;
+  marker.x = x;
+  marker.y = y;
 
   markUnsaved();
   draw();
