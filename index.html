@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Misty Rainforest</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div id="app">
+
+    <header id="appHeader">
+      <div>
+        <h1>Misty Rainforest</h1>
+
+        <div class="hint">
+          Browser-based low-voltage floorplan markup, plotting, notes, FOV, and PDF/JSON export.
+        </div>
+      </div>
+
+      <div class="hint">Khalid Iqbal • v1</div>
+    </header>
+
+    <div id="topbarActions">
+<button id="saveJsonBtn" type="button" class="save">
+  Download JSON
+</button>
+
+<button id="exportAllPdfBtn" type="button" class="export">
+  Export PDF
+</button>
+<span id="saveStatus" class="save-status saved">
+  Saved
+</span>
+
+<button id="notesBtn" type="button">
+  Panel
+</button>
+<div id="statusMessage">
+  Ready to go!
+</div>
+<button
+  id="undoBtn"
+  type="button"
+  class="destructive-start"
+>
+  Undo
+</button>
+
+<button id="clearBtn" type="button" class="warning">
+  Clear
+</button>
+
+<button id="deleteBtn" type="button" class="danger">
+  Delete
+</button>
+    </div>
+
+<section id="topbar">
+
+  <div class="field project-field">
+    <label for="projectName">Project*</label>
+
+    <input
+      id="projectName"
+      type="text"
+      placeholder="Project name"
+    />
+
+    <div id="projectNameError" class="field-error"></div>
+  </div>
+
+  <div class="field upload-field">
+    <label for="upload">Drawing Upload</label>
+
+    <input
+      id="upload"
+      type="file"
+      accept="image/*,.pdf"
+      multiple
+    />
+
+    <div id="uploadedFileName" class="file-status">
+      No file uploaded!
+    </div>
+  </div>
+
+  <div class="field page-field plotting-only">
+    <label>Page</label>
+
+    <div class="button-row">
+      <button id="prevPage" type="button">Prev</button>
+      <button id="nextPage" type="button">Next</button>
+    </div>
+
+    <div id="pageInfo" class="tiny">
+      Page 0 of 0
+    </div>
+  </div>
+
+  <div class="field system-field plotting-only">
+    <label for="systemSelect">System</label>
+
+    <select id="systemSelect"></select>
+
+    <div class="toolbar-spacer"></div>
+  </div>
+<div class="field icon-size-field plotting-only">
+  <label for="iconSizeSlider">Icon Size</label>
+
+  <input
+    id="iconSizeSlider"
+    type="range"
+    min="0.5"
+    max="2"
+    step="0.1"
+    value="1"
+  />
+
+  <div id="iconSizeValue" class="tiny">
+    100%
+  </div>
+</div>
+  <div class="field device-field plotting-only">
+    <label for="itemSelect">Device</label>
+
+    <select id="itemSelect"></select>
+
+    <div class="toolbar-spacer"></div>
+  </div>
+
+  <div class="field mode-field plotting-only">
+    <label>Mode</label>
+
+    <div class="button-row">
+      <button id="deviceModeBtn" type="button" class="primary">
+        Device
+      </button>
+
+      <button id="noteModeBtn" type="button">
+        Note
+      </button>
+
+      <button id="fovModeBtn" type="button">
+        FOV
+      </button>
+    </div>
+
+    <div id="modeInfo" class="tiny">
+      Mode: Device
+    </div>
+  </div>
+
+  <div class="field zoom-field plotting-only">
+    <label>Zoom</label>
+
+    <div class="button-row">
+      <button id="zoomOutBtn" type="button">−</button>
+      <button id="resetZoomBtn" type="button">Reset</button>
+      <button id="zoomInBtn" type="button">+</button>
+    </div>
+
+    <div id="zoomInfo" class="tiny">
+      Zoom: 100%
+    </div>
+    
+  </div>
+
+  <div id="progressWrap">
+    <div id="progressOuter">
+      <div id="progressBar"></div>
+    </div>
+
+    <div id="progressText" class="tiny">
+      Loading...
+    </div>
+  </div>
+
+</section>
+
+    <main id="workspace">
+       <div id="progressWrap" class="canvas-loading hidden">
+  <div class="loading-card">
+    <div id="progressText">Loading...</div>
+    <div class="progress-track">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+</div>
+
+      <section id="drawingArea">
+
+        <div id="drawingScroll">
+
+          <div id="drawingViewport">
+  
+            <div id="canvasWrap">
+           
+              <canvas id="canvas" width="800" height="500"></canvas>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <aside id="sidePanel">
+
+  <div class="side-panel-header">
+    <div>
+      <h2>Project Panel</h2>
+      <div class="tiny">Project info, notes, counts, and exports.</div>
+    </div>
+
+    <button id="closeNotesBtn" type="button">×</button>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Project Summary</p>
+
+    <div class="summary-grid">
+      <span>Project</span>
+      <strong id="panelProjectName">Current Project</strong>
+
+      <span>Drawing</span>
+      <strong id="panelDrawingName">No drawing loaded</strong>
+
+      <span>Page</span>
+      <strong id="panelPageInfo">Page 0 of 0</strong>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Counts / Legend</p>
+
+    <div id="counts">
+      No items plotted yet.
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Page Notes</p>
+
+    <textarea
+      id="notes"
+      placeholder="General notes for this page..."
+    ></textarea>
+
+    <div class="tiny mt">
+      Saved with the editable project JSON.
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Selected Item</p>
+
+    <div id="selectedInfo" class="tiny">
+      No item selected.
+    </div>
+
+    <textarea
+      id="selectedMarkerNote"
+      placeholder="Click a note/device marker to edit its note..."
+      disabled
+    ></textarea>
+
+    <div class="tiny mt">
+      Temporary location for item notes. Later this should move into a click/double-click modal.
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Placed Notes</p>
+
+    <div id="noteList" class="note-list">
+      No notes placed yet.
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-title">Save / Export</p>
+
+    <div class="button-row panel-actions">
+      <button id="loadJsonBtn" type="button">
+        Load Project
+      </button>
+    </div>
+
+    <input
+      id="loadProjectInput"
+      type="file"
+      accept=".json"
+      hidden
+    />
+
+    <div class="tiny mt">
+  <strong>Download JSON</strong> creates the editable project file.
+      <br />
+      <strong>Export PDF</strong> creates the marked-up drawing package.
+    </div>
+  </div>
+
+</aside>
+
+<div id="markerInspector" class="marker-inspector hidden">
+  <div class="inspector-header">
+    <strong id="inspectorTitle">Selected Item</strong>
+
+ <button id="closeInspectorBtn" type="button">×</button>
+  </div>
+
+  <div class="inspector-body">
+    <label for="inspectorNote">Note</label>
+
+    <textarea
+      id="inspectorNote"
+      placeholder="Add note for this item..."
+    ></textarea>
+    <div
+  id="fovControls"
+  class="fov-controls hidden"
+>
+  <label>FOV Rotation</label>
+
+  <div class="fov-rotation-buttons">
+    <button
+      id="rotateLeftBtn"
+      type="button"
+    >
+      -15°
+    </button>
+
+    <button
+      id="rotateRightBtn"
+      type="button"
+    >
+      +15°
+    </button>
+  </div>
+</div>
+  </div>
+
+  <div class="inspector-actions">
+<button id="deleteInspectorBtn" type="button" class="danger">Delete</button>
+
+  <button id="saveInspectorBtn" type="button" class="save">Save</button>
+  </div>
+</div>
+
+    </main>
+
+    <nav id="mobileToolbar">
+      <button id="mobileDeviceBtn" type="button">Device</button>
+      <button id="mobileNoteBtn" type="button">Note</button>
+      <button id="mobilePanBtn" type="button">Pan</button>
+      <button id="mobileNotesBtn" type="button">Notes</button>
+      <button id="mobileZoomOutBtn" type="button">−</button>
+      <button id="mobileZoomInBtn" type="button">+</button>
+    </nav>
+
+    <!-- Compatibility controls kept hidden because app.js currently expects these IDs. -->
+    <div id="compatControls" class="hidden" aria-hidden="true">
+      <select id="fovType">
+        <option value="directional">Directional</option>
+        <option value="circle">360 Circle</option>
+      </select>
+
+      <input id="fovRotation" type="range" min="0" max="359" value="0" />
+      <div id="fovRotationInfo">Rotation: 0°</div>
+
+      <input id="fovLength" type="range" min="20" max="180" value="70" />
+      <div id="fovLengthInfo">Size: 70</div>
+
+      <input id="fovOpacity" type="range" min="0.1" max="1" step="0.05" value="0.30" />
+      <div id="fovOpacityInfo">Opacity: 30%</div>
+
+      <input id="iconScale" type="range" min="0.5" max="2.5" step="0.1" value="1" />
+      <div id="iconScaleInfo">Icon scale: 100%</div>
+
+      <div id="fovTypeField"></div>
+      <div id="fovRotateField"></div>
+      <div id="fovSizeField"></div>
+
+      <button id="fovRotateLeftBtn" type="button">FOV -15°</button>
+      <button id="fovRotateRightBtn" type="button">FOV +15°</button>
+      <button id="exportCountsBtn" type="button">Export CSV</button>
+      <button id="exportPngBtn" type="button">PNG Page</button>
+      <button id="exportPdfBtn" type="button">PDF Page</button>
+    </div>
+
+  </div>
+<div id="noteModalBackdrop" class="modal-backdrop hidden">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="noteModalTitle">Note</h2>
+
+      <button id="closeNoteModalBtn" type="button" class="modal-close">
+        ×
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <label for="noteModalText">Note</label>
+
+      <textarea
+        id="noteModalText"
+        placeholder="Enter note details..."
+      ></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button id="deleteNoteModalBtn" type="button" class="danger">
+        Delete
+      </button>
+
+      <div class="modal-actions-right">
+        <button id="cancelNoteModalBtn" type="button">
+          Cancel
+        </button>
+
+        <button id="saveNoteModalBtn" type="button" class="save">
+          Save Note
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  <script src="app.js"></script>
+</body>
+</html>
