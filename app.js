@@ -914,12 +914,7 @@ HELPERS
 ==================================================
 */
 
-function onCanvasMouseDown(event) {
-  const { x, y } =
-    getCanvasPoint(event);
 
-  handleCanvasPress(x, y);
-}
 function pageHasReportContent(page) {
   if (!page) return false;
 
@@ -1602,6 +1597,12 @@ function findMarkerAt(x, y) {
   }
 
   return null;
+}
+function onCanvasMouseDown(event) {
+  const { x, y } =
+    getCanvasPoint(event);
+
+  handleCanvasPress(x, y);
 }
 
 function onCanvasMouseMove(event) {
