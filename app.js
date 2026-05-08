@@ -1556,9 +1556,7 @@ function findMarkerAt(x, y) {
 
   if (!page) return null;
 
-  for (
-    let i = page.markers.length - 1; i >= 0; i--
-  ) {
+  for (let i = page.markers.length - 1; i >= 0; i--) {
     const marker = page.markers[i];
 
     const distance = Math.hypot(
@@ -1566,12 +1564,32 @@ function findMarkerAt(x, y) {
       marker.y - y
     );
 
-    const radius =
-      marker.kind === "fov" ?
-      18 :
-      HIT_RADIUS;
+    // 360 FOV: allow clicking anywhere inside the circle
+    if (
+      marker.kind === "fov" &&
+      marker.fovType === "circle"
+    ) {
+      const radius =
+        marker.length || CONFIG.fov.size;
 
-    if (distance <= radius) {
+      if (distance <= radius) {
+        return i;
+      }
+
+      continue;
+    }
+
+    // Directional FOV: selectable near center
+    if (marker.kind === "fov") {
+      if (distance <= 24) {
+        return i;
+      }
+
+      continue;
+    }
+
+    // Normal markers
+    if (distance <= HIT_RADIUS) {
       return i;
     }
   }
@@ -1579,18 +1597,20 @@ function findMarkerAt(x, y) {
   return null;
 }
 
-function onCanvasMouseDown(event) {
-  if (!getCurrentPage()) {
-    alert("Upload a drawing first.");
-    return;
-  }
+function onCanvasMouseMove(event) {
+  if (draggingMarkerIndex === null) return;
 
-  const {
-    x,
-    y
-  } = getCanvasPoint(event);
+  const page = getCurrentPage();
 
-  handleCanvasPress(x, y);
+  if (!page) return;
+
+  const { x, y } = getCanvasPoint(event);
+
+  page.markers[draggingMarkerIndex].x = x;
+  page.markers[draggingMarkerIndex].y = y;
+
+  markUnsaved();
+  draw();
 }
 
 function handleCanvasPress(x, y) {
