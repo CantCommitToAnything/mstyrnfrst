@@ -913,6 +913,13 @@ if (iconSizeSlider) {
 HELPERS
 ==================================================
 */
+
+function onCanvasMouseDown(event) {
+  const { x, y } =
+    getCanvasPoint(event);
+
+  handleCanvasPress(x, y);
+}
 function pageHasReportContent(page) {
   if (!page) return false;
 
